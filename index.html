@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS to Tailwind AI Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Highlight.js for code syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/css.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Custom dark theme styles and scrollbars */
+        html, body {
+            height: 100%;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827;
+        }
+        
+        textarea::-webkit-scrollbar, pre::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track, pre::-webkit-scrollbar-track {
+            background: #1F2937;
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb, pre::-webkit-scrollbar-thumb {
+            background: #4B5563; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover, pre::-webkit-scrollbar-thumb:hover {
+            background: #6B7280; 
+        }
+
+        textarea {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        /* Ensure highlighted code block uses the same dark background */
+        pre code.hljs {
+            background-color: #1F2937; /* A slightly lighter gray than the background */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            white-space: pre-wrap;
+            color: #E5E7EB; 
+            font-family: 'Fira Code', monospace;
+            line-height: 1.5;
+        }
+        pre code.hljs .hljs-comment, pre code.hljs .hljs-selector-class {
+            color: inherit !important; /* Keep all text the same color for classes */
+            font-style: normal;
+        }
+
+
+        /* Simple loader animation */
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #374151; 
+            border-top-color: #60A5FA; 
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <!-- Header -->
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
+                CSS to Tailwind AI Converter
+            </h1>
+            <p class="text-lg text-gray-400">
+                Securely convert complex CSS, including **@media** and **:hover**, using a serverless AI proxy.
+            </p>
+        </header>
+
+        <!-- Converter UI -->
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Input Panel -->
+            <div class="flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <label for="css-input" class="text-sm font-medium text-gray-400">Your CSS</label>
+                    <select id="preset-selector" class="p-1 text-xs bg-gray-700 border border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 cursor-pointer">
+                        <option value="">— Load Preset Example —</option>
+                        <option value="button">Basic Button with Hover</option>
+                        <option value="card">Responsive Card with Shadow</option>
+                        <option value="tabs">Complex Tab Component (Before/After)</option>
+                    </select>
+                </div>
+                
+                <textarea 
+                    id="css-input"
+                    class="w-full h-96 lg:h-[65vh] p-4 bg-gray-800 border border-gray-700 rounded-lg shadow-inner text-gray-100 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Paste your CSS here to begin, or select an example above.
+                    
+.my-custom-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #FFEFD5;
+    min-height: 400px;
+    margin: 20px;
+}
+                    "
+                ></textarea>
+                <div id="char-count" class="text-right text-xs text-gray-500 mt-1">0 characters</div>
+            </div>
+            
+            <!-- Output Panel -->
+            <div class="flex flex-col">
+                <label for="tailwind-output" class="mb-2 text-sm font-medium text-gray-400">Tailwind Output & Analysis</label>
+                
+                <!-- Output Display Area -->
+                <div class="w-full h-96 lg:h-[65vh] bg-gray-800 border border-gray-700 rounded-lg shadow-inner overflow-auto">
+                    <!-- We use 'language-plaintext' to avoid misleading CSS syntax colors on the output -->
+                    <pre id="tailwind-code-container" class="p-0 m-0"><code class="language-plaintext">/* Output will appear here */</code></pre>
+                </div>
+
+                <!-- AI Analysis Box -->
+                <div id="analysis-box" class="mt-4 p-3 bg-gray-800 border-l-4 border-purple-500 rounded-lg text-sm hidden">
+                    <p class="font-semibold text-purple-400 mb-1">AI Analysis:</p>
+                    <p id="analysis-content" class="text-gray-300 italic"></p>
+                </div>
+            </div>
+        </main>
+
+        <!-- Controls -->
+        <footer class="text-center mt-6 flex flex-wrap items-center justify-center gap-4">
+            <button id="convert-btn" class="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg shadow-lg hover:from-blue-600 hover:to-purple-700 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                Convert CSS
+            </button>
+            <button id="clear-btn" class="px-6 py-3 bg-red-700 text-white font-medium rounded-lg hover:bg-red-600 transition duration-200">
+                Clear Input
+            </button>
+            <button id="copy-btn" class="px-6 py-3 bg-gray-700 text-gray-200 font-medium rounded-lg hover:bg-gray-600 transition duration-200 disabled:opacity-50" disabled>
+                Copy Output
+            </button>
+            <div id="loader" class="loader hidden"></div>
+        </footer>
+
+        <!-- Error Message Area -->
+        <div id="error-message" class="text-red-400 text-center mt-4 h-6"></div>
+
+    </div>
+
+    <script>
+        // DOM Elements
+        const cssInput = document.getElementById('css-input');
+        const tailwindCodeContainer = document.getElementById('tailwind-code-container');
+        const analysisBox = document.getElementById('analysis-box');
+        const analysisContent = document.getElementById('analysis-content');
+        const convertBtn = document.getElementById('convert-btn');
+        const clearBtn = document.getElementById('clear-btn'); // New element
+        const copyBtn = document.getElementById('copy-btn');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('error-message');
+        const presetSelector = document.getElementById('preset-selector');
+        const charCount = document.getElementById('char-count');
+        
+        // --- Configuration ---
+        const CONVERSION_ENDPOINT = 'http://localhost:3000/convert';
+
+        // --- Presets Data ---
+        const PRESETS = {
+            button: `.primary-btn {
+  /* Basic styling */
+  background-color: #10B981; /* Emerald 500 */
+  color: #FFFFFF;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.primary-btn:hover {
+  background-color: #059669; /* Emerald 600 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 1024px) {
+  .primary-btn {
+    font-size: 1.125rem;
+    padding: 1rem 2rem;
+  }
+}`,
+            card: `.user-card {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .user-card {
+    flex-direction: row;
+    width: 80%;
+    max-width: 768px;
+  }
+}
+
+.avatar {
+  border: 4px solid #f9fafb;
+  border-radius: 9999px;
+  width: 80px;
+  height: 80px;
+  margin: 16px;
+}`,
+            tabs: `.tab-item {
+  position: relative;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #9CA3AF; /* gray-400 */
+}
+
+.tab-item.active {
+  color: #6366F1; /* indigo-500 */
+  font-weight: 700;
+}
+
+/* Tab indicator */
+.tab-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #6366F1;
+}
+
+.tab-item:focus {
+  outline: 2px solid #3B82F6; /* blue-500 */
+  outline-offset: 2px;
+}`,
+        };
+
+        // --- Utility Functions ---
+
+        /** Updates the syntax highlighting and output display */
+        function updateOutputDisplay(tailwindClasses) {
+            const codeElement = tailwindCodeContainer.querySelector('code');
+            if (codeElement) {
+                // Ensure the output is treated as plaintext, not CSS
+                codeElement.className = 'language-plaintext'; 
+                codeElement.textContent = tailwindClasses;
+                // Re-run highlighting
+                hljs.highlightElement(codeElement);
+            }
+        }
+
+        /** Updates the character count */
+        function updateCharCount() {
+            charCount.textContent = `${cssInput.value.length} characters`;
+        }
+
+        /** Updates the analysis box */
+        function updateAnalysis(analysisText) {
+            if (analysisText && analysisText.trim()) {
+                analysisContent.textContent = analysisText.trim();
+                analysisBox.classList.remove('hidden');
+            } else {
+                analysisBox.classList.add('hidden');
+                analysisContent.textContent = '';
+            }
+        }
+
+        /** Sets the loading state for the UI */
+        function setLoading(isLoading) {
+            if (isLoading) {
+                convertBtn.disabled = true;
+                convertBtn.classList.add('hidden');
+                loader.classList.remove('hidden');
+                clearBtn.disabled = true;
+                copyBtn.disabled = true;
+                errorMessage.textContent = '';
+                analysisBox.classList.add('hidden');
+                updateOutputDisplay('/* Converting... (Waiting for secure server response) */');
+            } else {
+                convertBtn.disabled = false;
+                convertBtn.classList.remove('hidden');
+                loader.classList.add('hidden');
+                clearBtn.disabled = false;
+            }
+        }
+
+        // --- Event Handlers ---
+
+        /** Handles loading preset CSS into the input box */
+        presetSelector.addEventListener('change', (e) => {
+            const presetKey = e.target.value;
+            if (PRESETS[presetKey]) {
+                cssInput.value = PRESETS[presetKey];
+            } else if (presetKey === "") {
+                 // The default option clears the input, encouraging custom CSS
+                 cssInput.value = '';
+            }
+            updateCharCount();
+            // Clear previous results when loading a new preset
+            updateOutputDisplay('/* Output will appear here */');
+            updateAnalysis('');
+            copyBtn.disabled = true;
+        });
+        
+        /** Handles clearing the input and output areas */
+        clearBtn.addEventListener('click', () => {
+            cssInput.value = '';
+            updateCharCount();
+            updateOutputDisplay('/* Output will appear here */');
+            updateAnalysis('');
+            copyBtn.disabled = true;
+            errorMessage.textContent = '';
+            presetSelector.value = "";
+        });
+
+
+        /** Handles live character count update */
+        cssInput.addEventListener('input', updateCharCount);
+        // Initial count
+        updateCharCount();
+
+
+        /** Main function to handle the conversion process */
+        async function handleConvert() {
+            const cssCode = cssInput.value.trim();
+            if (!cssCode) {
+                errorMessage.textContent = 'Please enter some CSS code to convert.';
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Fetch request is sent to our local server proxy
+                const response = await fetch(CONVERSION_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cssCode: cssCode }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Result now contains both output and analysis
+                    const tailwindClasses = result.output || "Error: Conversion output missing.";
+                    const analysisText = result.analysis || "No specific analysis provided by AI.";
+
+                    updateOutputDisplay(tailwindClasses);
+                    updateAnalysis(analysisText);
+                    copyBtn.disabled = false;
+                } else {
+                    // Handle errors from our server/Google API
+                    const errorMsg = result.error || "Unknown server error.";
+                    errorMessage.textContent = `Conversion failed. Details: ${errorMsg}`;
+                    updateOutputDisplay(`/* Error: ${errorMsg} */`);
+                    updateAnalysis('');
+                }
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage.textContent = 'Connection failed. Is your Node.js server running on port 3000?';
+                } else {
+                    errorMessage.textContent = `An unexpected error occurred: ${error.message}`;
+                }
+                updateOutputDisplay('/* Error: Failed to connect to proxy server. */');
+                updateAnalysis('');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        /** Handles copying the output to the clipboard */
+        function handleCopy() {
+            // Get the text content from the highlighted code element
+            const textToCopy = tailwindCodeContainer.textContent;
+        
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = textToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            
+            try {
+                // Note: document.execCommand('copy') is used for compatibility in iframes
+                document.execCommand('copy');
+                copyBtn.textContent = 'Output Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy Output';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                errorMessage.textContent = 'Failed to copy to clipboard.';
+            }
+            
+            document.body.removeChild(tempTextArea);
+        }
+
+        // --- Event Listeners ---
+        convertBtn.addEventListener('click', handleConvert);
+        copyBtn.addEventListener('click', handleCopy);
+
+    </script>
+</body>
+</html>
+
