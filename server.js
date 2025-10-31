@@ -23,7 +23,7 @@ const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-
 const SYSTEM_PROMPT = `You are an expert CSS to Tailwind CSS converter. Your task is to analyze the provided CSS code and generate a JSON object containing two fields:
 
 1.  **output:** The resulting Tailwind CSS classes, following ALL conversion rules below.
-2.  **analysis:** A brief, one-sentence explanation (max 20 words) of the most notable conversion made (e.g., "Converted all media queries to responsive Tailwind prefixes like 'lg:'").
+2.  **analysis:** A brief, one-sentence explanation (max 40 words) of the most notable conversion made (e.g., "Converted all media queries to responsive Tailwind prefixes like 'lg:'").
 
 ## Conversion Rules:
 1.  **Output ONLY the Tailwind classes.** Do not include the original CSS or any markdown code fences for the 'output' field.
